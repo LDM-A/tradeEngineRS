@@ -1,4 +1,4 @@
-
+#[derive(Debug)]
 enum BidOrAsk {
     Bid,
     Ask,
@@ -22,11 +22,22 @@ impl Price {
       }
     }
 }
+
+#[derive(Debug)]
 struct Limit {
     price:Price,
     orders: Vec<Order>,
 }
 
+impl Limit {
+    fn new(price: f64) -> Limit {
+        Limit {
+            price: Price::new(price),
+            orders: Vec::new(),
+        }
+    }
+}
+#[derive(Debug)]
 struct Order {
     size: f64,
     bid_or_ask: BidOrAsk,
@@ -42,7 +53,8 @@ impl Order {
 }
 
 fn main() {
-    let price = Price::new(50.5);
 
-    println!("{:?}", price);
+
+    let limit = Limit::new(50.3);
+    println!("{:?}", limit);
 }
