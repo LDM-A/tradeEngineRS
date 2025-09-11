@@ -78,7 +78,24 @@ pub struct Limit {
             orders: Vec::new(),
         }
     }
+    pub fn fill_order(&mut self, market_order: &mut Order) {
+        for limit_order in self.orders.iter_mut(){
+            match market_order.size >= limit_order.size {
+                true => {
+                    market_order.size -= limit_order.size;
+                    limit_order.size = 0.0;
+                },
+                false => {
+                    limit_order.size -= market_order.size;
+                    market_order.size = 0.0;
+                },
+            }
 
+            if market_order.is_filled() {
+                break;
+            }
+        }
+    }
     pub fn add_order(&mut self, order: Order) {
         self.orders.push(order);
     }
@@ -95,5 +112,27 @@ impl Order {
             bid_or_ask,
             size,
         }
+    }
+
+    pub fn is_filled(&self) -> bool {
+        return self.size == 0.0;
+    }
+}
+
+#[cfg(test)]
+pub mod tests {
+    use super::*;
+
+    #[test]
+    fn limit_order_fill() {
+        let price = Price::new(1000.0);
+        let mut limit = Limit::new(price);
+        let buy_limit_order = Order::new(BidOrAsk::Bid, 100.0);
+        limit.add_order(buy_limit_order);
+
+        let mut sell_market_order = Order::new(BidOrAsk::Ask, 99.0);
+        limit.fill_order(&mut sell_market_order);
+
+        println!("{:?}", limit);
     }
 }
