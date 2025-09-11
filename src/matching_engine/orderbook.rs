@@ -124,7 +124,7 @@ pub mod tests {
     use super::*;
 
     #[test]
-    fn limit_order_fill() {
+    fn limit_order_single_fill() {
         let price = Price::new(1000.0);
         let mut limit = Limit::new(price);
         let buy_limit_order = Order::new(BidOrAsk::Bid, 100.0);
@@ -134,5 +134,27 @@ pub mod tests {
         limit.fill_order(&mut sell_market_order);
 
         println!("{:?}", limit);
+
+        assert_eq!(sell_market_order.is_filled(), true);
+        assert_eq!(limit.orders.get(0).unwrap().size, 1.0);
+    }
+    #[test]
+    fn limit_order_multiple_fill() {
+        let price = Price::new(1000.0);
+        let mut limit = Limit::new(price);
+        let buy_limit_order = Order::new(BidOrAsk::Bid, 100.0);
+        let buy_limit_order_2 = Order::new(BidOrAsk::Bid, 100.0);
+        limit.add_order(buy_limit_order);
+        limit.add_order(buy_limit_order_2);
+
+        let mut sell_market_order = Order::new(BidOrAsk::Ask, 199.0);
+        limit.fill_order(&mut sell_market_order);
+
+        println!("{:?}", limit);
+
+        assert_eq!(sell_market_order.is_filled(), true);
+        assert_eq!(limit.orders.get(0).unwrap().is_filled(), true);
+        assert_eq!(limit.orders.get(1).unwrap().is_filled(), false);
+        assert_eq!(limit.orders.get(1).unwrap().size, 1.0);
     }
 }
