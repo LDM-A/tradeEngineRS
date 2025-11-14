@@ -21,29 +21,33 @@ impl Orderbook {
     }
 
     pub fn fill_market_order(&mut self, market_order: &mut Order) {
-        match market_order.bid_or_ask {
-            BidOrAsk::Bid => {
-                for limit_order in self.ask_limits(){
-                    limit_order.fill_order(market_order);
-
-                    if market_order.is_filled() {
-                        break;
-                    }
-                }
-            },
-            BidOrAsk::Ask => {
-
-            },
+        let limits = match market_order.bid_or_ask{
+            BidOrAsk::Bid => self.ask_limits(),
+            BidOrAsk::Ask => self.bid_limits() 
+        };
+        for limit_order in limits {
+            limit_order.fill_order(market_order);
+            if market_order.is_filled() {
+                break;
+            }
         }
     }
-    // Still need to sort both limit helper functions
+    // Bid (buy order) => Fetch ask limits => asks sorted by lowest price
     pub fn ask_limits(&mut self) -> Vec<&mut Limit> {
-        self.asks.values_mut().collect::<Vec<&mut Limit>>()
-        
-    }
+        let mut limits = self.asks.values_mut().collect::<Vec<&mut Limit>>();
 
+        limits.sort_by(|a,b| a.price.cmp(&b.price));
+
+        limits
+    }
+    
+    // Ask (sell order) => Fetch bid limits => bids sorted by highest price
     pub fn bid_limits(&mut self) -> Vec<&mut Limit> {
-        self.bids.values_mut().collect::<Vec<&mut Limit>>()
+        let mut limits = self.bids.values_mut().collect::<Vec<&mut Limit>>();
+
+        limits.sort_by(|a,b| b.price.cmp(&a.price));
+
+        limits
         
     }
 
@@ -89,6 +93,8 @@ pub struct Limit {
             orders: Vec::new(),
         }
     }
+
+
     fn total_volume (&self) -> f64 {
         self
             .orders
@@ -143,6 +149,8 @@ impl Order {
 pub mod tests {
     use super::*;
     use rust_decimal::dec;
+
+
 
     #[test]
     fn limit_total_volume() {
